@@ -11,6 +11,7 @@ export default function ProfilePage() {
   const [formData, setFormData] = useState({
     phoneNumber: '',
     address: '',
+    role : '',
     preferences: {}
   });
 
@@ -25,6 +26,7 @@ export default function ProfilePage() {
           setFormData({
             phoneNumber: data.phoneNumber || '',
             address: data.address || '',
+            role : data.role || '',
             preferences: data.preferences || {}
           });
         } catch (error) {
@@ -123,6 +125,18 @@ export default function ProfilePage() {
                 placeholder="Enter your address"
               />
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-1">
+                role
+              </label>
+              <Input
+                type="text"
+                value={formData.role}
+                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                placeholder="Enter your role"
+              />
+            </div>
+
 
             <div className="mt-6">
               <Button type="submit" className="w-full">
