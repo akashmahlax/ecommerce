@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button'; // Assuming you have UI compone
 import { Input } from '@/components/ui/input'; // Assuming you have UI components
 export default function ProfilePage() {
   const { user } = useUser();
-  const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     phoneNumber: '',
