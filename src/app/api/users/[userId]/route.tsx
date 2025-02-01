@@ -12,6 +12,7 @@ export async function POST(request: Request, { params }: { params: { userId: str
     }
     return NextResponse.json(user);
   } catch (error) {
+    console.error('Error in GET /api/users/[userId]:', error);
     return NextResponse.json(
       { error: 'Failed to fetch user data' },
       { status: 500 }
@@ -30,13 +31,16 @@ export async function PUT(request: Request, { params }: { params: { userId: stri
       { $set: data },
       { upsert: true }
     );
+    console.log('result', result);
 
     const updatedUser = await db.collection('users').findOne({ clerkId: userId });
     return NextResponse.json(updatedUser);
   } catch (error) {
     return NextResponse.json(
-      { error: 'Failed to update user data' },
+      { error: 'Failed to update user data', details: error },
       { status: 500 }
+     
     );
+   
   }
 }

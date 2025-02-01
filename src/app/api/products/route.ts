@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import clientPromise, { MongoClient } from '@/lib/mongodb';
+import clientPromise from '@/lib/mongodb';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const db = (await clientPromise).db();
     const products = await db.collection('products').find({}).toArray();

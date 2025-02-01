@@ -7,7 +7,7 @@ export const columns = [
     {
       Header: "Actions",
       accessor: "id",
-      Cell: ({ value }) => (
+      Cell: ({ }: { value: string }) => (
         <div className="space-x-2">
           <button className="text-blue-600">Edit</button>
           <button className="text-red-600">Delete</button>
