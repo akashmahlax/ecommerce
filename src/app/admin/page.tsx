@@ -1,15 +1,14 @@
 // app/admin/dashboard/page.jsx
 'use client';
-import { useUser } from '@clerk/nextjs';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { DataTable } from '@/components/admin/products-table';
 import { toast } from 'sonner';
 
+
 export default function AdminDashboard() {
-  const { user, isLoaded } = useUser();
+ 
   const [isAdmin, setIsAdmin] = useState(true);
   const [products, setProducts] = useState([]);
   const [formData, setFormData] = useState({
@@ -39,6 +38,7 @@ export default function AdminDashboard() {
     };
 
     if (isAdmin) fetchProducts();
+    setIsAdmin(true);
   }, [isAdmin]);
 
 
