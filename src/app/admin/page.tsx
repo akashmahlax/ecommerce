@@ -5,31 +5,25 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { DataTable } from '@/components/admin/products-table';
 import { toast } from 'sonner';
 
 export default function AdminDashboard() {
   const { user, isLoaded } = useUser();
+  const [isAdmin, setIsAdmin] = useState(true);
   const [products, setProducts] = useState([]);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     price: '',
     category: '',
-    stock: 0,
+    images: [],
+    stock: 0
   });
-  const [isAdmin, setIsAdmin] = useState(true);
+  const [editMode, setEditMode] = useState(false);
+  const [currentProductId, setCurrentProductId] = useState(null);
 
-  // Check admin status
-  useEffect(() => {
-    const checkAdminStatus = async () => {
-      if (user) {
-        const response = await fetch(`/api/users/${user.id}`);
-        const userData = await response.json();
-        setIsAdmin(userData.role === 'admin');
-      }
-    };
-    if (isLoaded) checkAdminStatus();
-  }, [user, isLoaded]);
+  
 
   // Fetch products
   useEffect(() => {
@@ -47,39 +41,61 @@ export default function AdminDashboard() {
     if (isAdmin) fetchProducts();
   }, [isAdmin]);
 
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/products', {
-        method: 'POST',
+      const method = editMode ? 'PUT' : 'POST';
+      const endpoint = editMode ? `/api/products/${currentProductId}` : '/api/products';
+
+      const response = await fetch(endpoint, {
+        method,
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(formData)
       });
 
       if (response.ok) {
-        const newProduct = await response.json();
-        setProducts([...products, newProduct]);
-        toast.success('Product created successfully');
-        setFormData({
-          name: '',
-          description: '',
-          price: '',
-          category: '',
-          stock: 0,
-        });
-      } else {
-        toast.error('Error creating product');
+        toast.success(editMode ? 'Product updated successfully' : 'Product created successfully');
+        setFormData({ name: '', description: '', price: '', category: '', images: [], stock: 0 });
+        setEditMode(false);
+        fetchProducts();
       }
     } catch (error) {
-      toast.error('Error creating product');
+      toast.error('Error saving product');
       console.error('Error:', error);
     }
   };
 
-  if (!isLoaded) return <div>Loading...</div>;
-  if (!isAdmin) return <div>Unauthorized access</div>;
+  const handleDelete = async (id) => {
+    try {
+      const confirmed = confirm('Are you sure you want to delete this product?');
+      if (!confirmed) return;
+
+      const response = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+
+      if (response.ok) {
+        toast.success('Product deleted successfully');
+        setProducts(products.filter(product => product._id !== id));
+      }
+    } catch (error) {
+      toast.error('Error deleting product');
+      console.error('Error:', error);
+    }
+  };
+
+  const handleEdit = (product) => {
+    setEditMode(true);
+    setCurrentProductId(product._id);
+    setFormData(product);
+  };
+
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files);
+    const imageUrls = files.map(file => URL.createObjectURL(file));
+    setFormData({ ...formData, images: imageUrls });
+  };
 
   return (
     <div className="min-h-screen p-8">
@@ -87,9 +103,9 @@ export default function AdminDashboard() {
         <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Add Product Form */}
+          {/* Add or Update Product Form */}
           <div className="bg-white p-6 rounded-lg shadow">
-            <h2 className="text-xl font-semibold mb-4">Add New Product</h2>
+            <h2 className="text-xl font-semibold mb-4">{editMode ? 'Edit Product' : 'Add New Product'}</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Product Name</label>
@@ -140,8 +156,22 @@ export default function AdminDashboard() {
                 />
               </div>
 
+              <div>
+                <label className="block text-sm font-medium mb-1">Product Images</label>
+                <Input
+                  type="file"
+                  multiple
+                  onChange={handleImageChange}
+                />
+                <div className="mt-2 grid grid-cols-3 gap-2">
+                  {formData.images.map((image, index) => (
+                    <img key={index} src={image} alt="Product Preview" className="w-full h-24 object-cover rounded" />
+                  ))}
+                </div>
+              </div>
+
               <Button type="submit" className="w-full">
-                Add Product
+                {editMode ? 'Update Product' : 'Add Product'}
               </Button>
             </form>
           </div>
@@ -149,20 +179,21 @@ export default function AdminDashboard() {
           {/* Products List */}
           <div className="bg-white p-6 rounded-lg shadow">
             <h2 className="text-xl font-semibold mb-4">Manage Products</h2>
-            {products.length > 0 ? (
-              <ul>
-                {products.map((product) => (
-                  <li key={product._id} className="border-b py-2 flex items-center">
-                    <img src={product.image} alt={product.name} className="w-16 h-16 object-cover mr-4" />
-                    <div>
-                      <strong>{product.name}</strong> - ₹{product.price} ({product.stock} in stock)
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p>No products available.</p>
-            )}
+            <ul className="space-y-4">
+              {products.map(product => (
+                <li key={product._id} className="border p-4 rounded-lg flex justify-between items-center">
+                  <div>
+                    <h3 className="font-semibold">{product.name}</h3>
+                    <p className="text-sm text-gray-600">{product.description}</p>
+                    <p className="text-sm">Price: {product.price} | Stock: {product.stock}</p>
+                  </div>
+                  <div className="space-x-2">
+                    <Button variant="outline" onClick={() => handleEdit(product)}>Edit</Button>
+                    <Button variant="destructive" onClick={() => handleDelete(product._id)}>Delete</Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </div>

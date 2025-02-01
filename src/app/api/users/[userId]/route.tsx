@@ -1,15 +1,15 @@
 import { NextResponse } from 'next/server';
 import clientPromise from '@/lib/mongodb';
 
-export async function GET(request, { params }) {
-  const { userId } = params;
-  
+export async function POST(request: Request, { params }: { params: { userId: string } }) {
   try {
+    const { userId } = await params;
     const db = (await clientPromise).db();
     const user = await db.collection('users').findOne({ clerkId: userId });
-    
-    if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
     return NextResponse.json(user);
   } catch (error) {
     return NextResponse.json(
@@ -19,12 +19,12 @@ export async function GET(request, { params }) {
   }
 }
 
-export async function PUT(request, { params }) {
-  const { userId } = params;
-  const data = await request.json();
-
+export async function PUT(request: Request, { params }: { params: { userId: string } }) {
   try {
+    const { userId } = await params;
+    const data = await request.json();
     const db = (await clientPromise).db();
+
     const result = await db.collection('users').updateOne(
       { clerkId: userId },
       { $set: data },
